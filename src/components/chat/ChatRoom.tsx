@@ -5,44 +5,11 @@ import { ChatInput } from "./ChatInput"
 import { Button } from "@/components/ui/button"
 import { MessageSquareText, Copy, LogOut } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { io } from "socket.io-client"
-
-const backendUrl = "https://temporary-sbhe.onrender.com";
-const socket = io(backendUrl)
 
 export const ChatRoom = () => {
   const { roomId, messages, username, otherUserName, reset } = useChatStore()
-  const setMessages = useChatStore((state) => state.setMessages)
-  const addMessage = useChatStore((state) => state.addMessage)
   const { toast } = useToast()
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const socketInitialized = useRef(false)
-  
-  useEffect(() => {
-    // Fetch all messages on mount
-    fetch(`${backendUrl}/messages`)
-      .then((res) => res.json())
-      .then((data) => setMessages(data))
-  }, [setMessages])
-
-  useEffect(() => {
-    if (socketInitialized.current) return;
-    socketInitialized.current = true;
-
-    // Listen for new messages
-    socket.on("new_message", (msg) => {
-      addMessage({
-        username: msg.username,
-        text: msg.text,
-        file: msg.file,
-      })
-    })
-
-    return () => {
-      socket.off("new_message")
-      socketInitialized.current = false;
-    }
-  }, [addMessage, username])
   
   useEffect(() => {
     scrollToBottom()

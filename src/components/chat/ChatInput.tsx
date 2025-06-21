@@ -12,7 +12,10 @@ export const ChatInput = () => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const addMessage = useChatStore((state) => state.addMessage)
   const { toast } = useToast()
-  const username = useChatStore((state) => state.username)
+  const { username, roomId } = useChatStore((state) => ({
+    username: state.username,
+    roomId: state.roomId,
+  }))
   const backendUrl = "https://temporary-sbhe.onrender.com"
 
   const handleSubmit = async (e: FormEvent) => {
@@ -52,6 +55,7 @@ export const ChatInput = () => {
           username: username || "me",
           text: message.trim(),
           file: fileData,
+          roomId: roomId,
         }),
       })
 

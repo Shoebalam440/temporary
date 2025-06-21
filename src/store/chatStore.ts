@@ -26,7 +26,7 @@ interface ChatState {
   // Actions
   setRoomId: (roomId: string) => void
   setUsername: (username: string) => void
-  addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void
+  addMessage: (message: Message) => void
   joinRoom: (roomId: string, username: string) => void
   createRoom: (username: string) => string
   setOtherUserName: (name: string) => void
@@ -106,29 +106,26 @@ export const useChatStore = create<ChatState>((set, get) => {
     },
     
     addMessage: (message) => {
-      const newMessage = {
-        ...message,
-        id: uuidv4(),
-        timestamp: new Date().toISOString()
-      }
       set((state) => {
         // Prevent adding duplicate messages
-        if (state.messages.some(m => m.id === newMessage.id)) {
+        if (state.messages.some(m => m.id === message.id)) {
           return state
         }
-        const updatedMessages = [...state.messages, { ...newMessage, timestamp: new Date(newMessage.timestamp) }]
+        const updatedMessages = [...state.messages, { ...message, timestamp: new Date(message.timestamp) }]
         saveState({ ...state, messages: updatedMessages })
         return { messages: updatedMessages }
       })
     },
     
     joinRoom: (roomId, username) => {
+      get().socket?.emit('joinRoom', roomId);
       set({ roomId, username, isJoined: true, messages: [] })
       saveState({ ...get(), roomId, username, isJoined: true, messages: [] })
     },
     
     createRoom: (username) => {
-      const roomId = uuidv4().substring(0, 8) // Shorter, more user-friendly ID
+      const roomId = uuidv4().substring(0, 8)
+      get().socket?.emit('joinRoom', roomId);
       set({ roomId, username, isJoined: true, messages: [] })
       saveState({ ...get(), roomId, username, isJoined: true, messages: [] })
       return roomId
@@ -159,10 +156,12 @@ export const useChatStore = create<ChatState>((set, get) => {
         console.log("Socket connected:", newSocket.id);
       });
 
-      newSocket.on("newMessage", (message) => {
-        // We need a way to add messages from the server
-        // This assumes the incoming message has the full Message shape
-        set((state) => ({ messages: [...state.messages, { ...message, timestamp: new Date(message.timestamp) }] }));
+      newSocket.on("newMessage", (message: Message) => {
+        get().addMessage(message);
+      });
+      
+      newSocket.on("allMessages", (messages: Message[]) => {
+        set({ messages: messages.map(m => ({...m, timestamp: new Date(m.timestamp)})) });
       });
       
       set({ socket: newSocket });

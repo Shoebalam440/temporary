@@ -30,8 +30,8 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// In-memory message store
-let messages = [];
+// In-memory message store, now organized by room
+let messagesByRoom = {};
 
 // Create HTTP server and Socket.IO server
 const server = http.createServer(app);
@@ -44,6 +44,14 @@ const io = new Server(server, {
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
+
+  socket.on('joinRoom', (roomId) => {
+    socket.join(roomId);
+    console.log(`User ${socket.id} joined room ${roomId}`);
+    // Optionally send history
+    socket.emit('allMessages', messagesByRoom[roomId] || []);
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
@@ -51,19 +59,29 @@ io.on('connection', (socket) => {
 
 // POST /messages - receive a message
 app.post('/messages', (req, res) => {
-  const { username, text, file } = req.body;
-  if (!username || (!text && !file)) {
-    return res.status(400).json({ error: 'username and either text or file are required' });
+  const { username, text, file, roomId } = req.body;
+  if (!username || (!text && !file) || !roomId) {
+    return res.status(400).json({ error: 'username, roomId and either text or file are required' });
   }
+  
   const message = { id: Date.now(), username, text, file, timestamp: new Date() };
-  messages.push(message);
-  io.emit('new_message', message); // Emit to all clients
+
+  if (!messagesByRoom[roomId]) {
+    messagesByRoom[roomId] = [];
+  }
+  messagesByRoom[roomId].push(message);
+
+  io.to(roomId).emit('newMessage', message); // Emit only to the specific room
   res.status(201).json({ message: 'Message received', data: message });
 });
 
-// GET /messages - get all messages
+// GET /messages - get all messages for a specific room
 app.get('/messages', (req, res) => {
-  res.json(messages);
+  const { roomId } = req.query;
+  if (!roomId) {
+    return res.status(400).json({ error: 'roomId is required' });
+  }
+  res.json(messagesByRoom[roomId] || []);
 });
 
 // POST /upload - receive a file
