@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast'
 
 const formSchema = z.object({
   text: z.string(),
+  fileUrl: z.string().url().optional().or(z.literal('')),
 })
 
 const backendUrl = "https://temporary-sbhe.onrender.com";
@@ -23,7 +24,7 @@ export const ChatInput = () => {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { text: "" },
+    defaultValues: { text: "", fileUrl: "" },
   })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,31 +50,28 @@ export const ChatInput = () => {
   }
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!socket || (!values.text.trim() && !file)) {
+    if (!socket || (!values.text.trim() && !values.fileUrl)) {
       return
     }
 
-    const formData = new FormData()
-    formData.append('username', username)
-    formData.append('text', values.text)
-    formData.append('roomId', roomId!)
-    if (file) {
-      formData.append('file', file)
+    const payload = {
+      username,
+      text: values.text,
+      roomId,
+      fileUrl: values.fileUrl || undefined,
     }
 
     try {
-      const res = await fetch(`${backendUrl}/upload`, {
+      const res = await fetch("https://temporary-sbhe.onrender.com/upload", {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
         throw new Error('Failed to send message');
       }
-      
       form.reset()
-      removeFile()
-
     } catch (error) {
       console.error(error)
       toast({
@@ -86,21 +84,8 @@ export const ChatInput = () => {
 
   return (
     <div className="relative">
-      {file && (
-        <div className="absolute bottom-full left-0 right-0 p-2 bg-muted rounded-t-md">
-            <div className="flex items-center justify-between bg-background p-2 rounded-md">
-                <div className="flex items-center gap-2 overflow-hidden">
-                    <Paperclip size={16} className="text-muted-foreground flex-shrink-0" />
-                    <p className="text-sm text-muted-foreground truncate">{file.name}</p>
-                </div>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={removeFile}>
-                    <X size={16} />
-                </Button>
-            </div>
-        </div>
-      )}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2">
           <FormField
             control={form.control}
             name="text"
@@ -112,12 +97,19 @@ export const ChatInput = () => {
               </FormItem>
             )}
           />
-          <Button type="button" variant="outline" size="icon" onClick={() => fileInputRef.current?.click()}>
-            <Paperclip size={18} />
-          </Button>
-          <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+          <FormField
+            control={form.control}
+            name="fileUrl"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormControl>
+                  <Input placeholder="Paste file link (optional)" {...field} autoComplete="off" />
+                </FormControl>
+              </FormItem>
+            )}
+          />
           <Button type="submit" disabled={!socket}>
-            <Send size={18} />
+            Send
           </Button>
         </form>
       </Form>

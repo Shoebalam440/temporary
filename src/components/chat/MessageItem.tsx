@@ -29,17 +29,13 @@ export const MessageItem = ({ message }: { message: Message }) => {
           {!isMyMessage && <div className="font-bold text-xs mb-1 text-primary">{message.username}</div>}
           <p className="text-sm">{message.text}</p>
           
-          {message.file && (
+          {message.file && message.file.url && (
             <div className="mt-2">
-              {message.file.type.startsWith("image/") ? (
-                <img src={message.file.url} alt={message.file.name} className="max-w-full max-h-60 rounded-md object-contain cursor-pointer" onClick={handleDownload} />
+              {message.file.url.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? (
+                <img src={message.file.url} alt={message.file.url} className="max-w-full max-h-60 rounded-md object-contain cursor-pointer" onClick={handleDownload} />
               ) : (
                 <div className="flex items-center justify-between bg-background/50 p-2 rounded-md">
-                  <div className="flex items-center gap-2">
-                    <FileText size={24} />
-                    <span className="text-sm truncate">{message.file.name}</span>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleDownload}><Download size={16} /></Button>
+                  <a href={message.file.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm truncate">Download/View File</a>
                 </div>
               )}
             </div>
