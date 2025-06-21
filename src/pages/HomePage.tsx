@@ -14,7 +14,7 @@ function HomePage() {
           <div className="rounded-full bg-primary/10 p-3 mb-6">
             <MessageSquareText className="w-10 h-10 text-primary" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">Quick Chat Without Sign-In</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">fiveminor</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mb-8">
             Connect instantly, share files, and chat securely without sharing personal information.
             Perfect for quick conversations when privacy matters.
@@ -80,8 +80,8 @@ function HomePage() {
       {/* Footer */}
       <footer className="border-t mt-auto py-6">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>Quick Chat is designed for secure, temporary communications.</p>
-          <p className="mt-2">No data is stored on servers. All messages and files remain only in your browser.</p>
+          <p>All rights reserved to shoeb alam.</p>
+          <p className="mt-2">Contact: <a href="mailto:shoebalam@anjumanengg.edu.in" className="text-primary hover:underline">shoebalam@anjumanengg.edu.in</a></p>
         </div>
       </footer>
     </div>
