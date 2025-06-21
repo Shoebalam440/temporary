@@ -20,6 +20,7 @@ interface ChatState {
   messages: Message[]
   username: string
   isJoined: boolean
+  isConnected: boolean
   otherUserName: string | null
   socket: Socket | null
   
@@ -82,6 +83,7 @@ const initialState = {
   messages: [],
   username: '',
   isJoined: false,
+  isConnected: false,
   otherUserName: null,
   socket: null,
 }
@@ -154,6 +156,12 @@ export const useChatStore = create<ChatState>((set, get) => {
 
       newSocket.on("connect", () => {
         console.log("Socket connected:", newSocket.id);
+        set({ isConnected: true });
+      });
+
+      newSocket.on("disconnect", () => {
+        console.log("Socket disconnected");
+        set({ isConnected: false });
       });
 
       newSocket.on("newMessage", (message: Message) => {
@@ -171,7 +179,7 @@ export const useChatStore = create<ChatState>((set, get) => {
       const { socket } = get();
       if (socket) {
         socket.disconnect();
-        set({ socket: null });
+        set({ isConnected: false });
       }
     }
   }

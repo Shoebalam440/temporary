@@ -25,7 +25,11 @@ type CreateFormValues = z.infer<typeof createSchema>
 
 export const JoinRoom = () => {
   const [activeTab, setActiveTab] = useState<"join" | "create">("create")
-  const { joinRoom, createRoom } = useChatStore()
+  const { joinRoom, createRoom, isConnected } = useChatStore((state) => ({
+    joinRoom: state.joinRoom,
+    createRoom: state.createRoom,
+    isConnected: state.isConnected,
+  }))
   
   // Form for joining an existing room
   const joinForm = useForm<JoinFormValues>({
@@ -91,8 +95,8 @@ export const JoinRoom = () => {
                     )}
                   />
                   <CardFooter className="px-0 pt-4">
-                    <Button type="submit" className="w-full">
-                      Create & Join
+                    <Button type="submit" className="w-full" disabled={!isConnected}>
+                      {isConnected ? "Create & Join" : "Connecting..."}
                     </Button>
                   </CardFooter>
                 </form>
@@ -132,8 +136,8 @@ export const JoinRoom = () => {
                     )}
                   />
                   <CardFooter className="px-0 pt-4">
-                    <Button type="submit" className="w-full">
-                      Join Room
+                    <Button type="submit" className="w-full" disabled={!isConnected}>
+                      {isConnected ? "Join Room" : "Connecting..."}
                     </Button>
                   </CardFooter>
                 </form>
