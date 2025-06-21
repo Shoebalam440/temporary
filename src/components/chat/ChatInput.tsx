@@ -19,55 +19,56 @@ const backendUrl = "https://temporary-sbhe.onrender.com";
 export const ChatInput = () => {
   const { socket, roomId, username } = useChatStore()
   const { toast } = useToast()
-  const [file, setFile] = useState<File | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { text: "", fileUrl: "" },
   })
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0]
-    if (selectedFile) {
-      if (selectedFile.size > 10 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please select a file smaller than 10MB.",
-          variant: "destructive"
-        })
-        return
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch('https://file.io', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        form.setValue('fileUrl', data.link);
+        toast({ title: "File uploaded!", description: "Link ready to send." });
+      } else {
+        toast({ title: "Upload failed", description: data.message, variant: "destructive" });
       }
-      setFile(selectedFile)
+    } catch (err) {
+      toast({ title: "Upload failed", description: "Network error.", variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
-  }
-  
-  const removeFile = () => {
-    setFile(null);
-    if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-    }
-  }
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!socket || (!values.text.trim() && !values.fileUrl)) {
       return
     }
-
     const payload = {
       username,
       text: values.text,
       roomId,
       fileUrl: values.fileUrl || undefined,
     }
-
     try {
       const res = await fetch("https://temporary-sbhe.onrender.com/upload", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
       if (!res.ok) {
         throw new Error('Failed to send message');
       }
@@ -108,7 +109,22 @@ export const ChatInput = () => {
               </FormItem>
             )}
           />
-          <Button type="submit" disabled={!socket}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? 'Uploading...' : '📎'}
+          </Button>
+          <Button type="submit" disabled={!socket || uploading}>
             Send
           </Button>
         </form>
