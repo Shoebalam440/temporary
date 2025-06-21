@@ -7,7 +7,7 @@
 /backend/dist
 
 # Uploads
-/backend/uploads
+/backend/uploads/
 
 # Logs
 npm-debug.log*
