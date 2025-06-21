@@ -20,6 +20,7 @@ interface ChatState {
   username: string
   messages: Message[]
   isJoined: boolean
+  isConnected: boolean
   socket: Socket | null
   
   initSocket: () => void
@@ -38,6 +39,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   username: '',
   messages: [],
   isJoined: false,
+  isConnected: false,
   socket: null,
 
   initSocket: () => {
@@ -45,23 +47,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const socket = io(backendUrl);
     
     socket.on("connect", () => {
-      set({ socket });
+      set({ socket, isConnected: true });
     });
     
     socket.on("disconnect", () => {
-      set({ socket: null });
+      set({ socket: null, isConnected: false });
     });
 
     socket.on("newMessage", (message) => get().addMessage(message));
     socket.on("allMessages", (messages) => set({ messages: messages.map(m => ({...m, timestamp: new Date(m.timestamp)})) }));
-    
-    // Set the socket immediately for other components to use
-    set({ socket });
   },
 
   closeSocket: () => {
     get().socket?.disconnect();
-    set({ socket: null });
+    set({ socket: null, isConnected: false });
   },
 
   joinRoom: (roomId, username) => {
@@ -89,6 +88,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       username: '',
       messages: [],
       isJoined: false,
+      isConnected: false,
       socket: null,
     });
   },
