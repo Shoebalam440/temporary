@@ -20,7 +20,6 @@ interface ChatState {
   username: string
   messages: Message[]
   isJoined: boolean
-  isConnected: boolean
   socket: Socket | null
   
   initSocket: () => void
@@ -34,43 +33,35 @@ interface ChatState {
 
 const backendUrl = "https://temporary-sbhe.onrender.com";
 
-const initialState = {
+export const useChatStore = create<ChatState>((set, get) => ({
   roomId: null,
   username: '',
   messages: [],
   isJoined: false,
-  isConnected: false,
   socket: null,
-}
-
-export const useChatStore = create<ChatState>((set, get) => ({
-  ...initialState,
 
   initSocket: () => {
     if (get().socket) return;
-
     const socket = io(backendUrl);
-
+    
     socket.on("connect", () => {
-      set({ isConnected: true, socket: socket });
+      set({ socket });
     });
-
+    
     socket.on("disconnect", () => {
-      set({ isConnected: false, socket: null });
+      set({ socket: null });
     });
 
-    socket.on("newMessage", (message: Message) => {
-      get().addMessage(message);
-    });
-
-    socket.on("allMessages", (messages: Message[]) => {
-      set({ messages: messages.map(m => ({...m, timestamp: new Date(m.timestamp)})) });
-    });
+    socket.on("newMessage", (message) => get().addMessage(message));
+    socket.on("allMessages", (messages) => set({ messages: messages.map(m => ({...m, timestamp: new Date(m.timestamp)})) }));
+    
+    // Set the socket immediately for other components to use
+    set({ socket });
   },
 
   closeSocket: () => {
     get().socket?.disconnect();
-    set({ socket: null, isConnected: false });
+    set({ socket: null });
   },
 
   joinRoom: (roomId, username) => {
@@ -86,19 +77,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
   
   addMessage: (message) => {
-    set((state) => {
-      if (state.messages.some(m => m.id === message.id)) {
-        return state;
-      }
-      return { messages: [...state.messages, { ...message, timestamp: new Date(message.timestamp) }] };
-    });
+    set((state) => ({
+      messages: [...state.messages, { ...message, timestamp: new Date(message.timestamp) }]
+    }));
   },
   
   reset: () => {
     get().closeSocket();
-    set(initialState);
+    set({
+      roomId: null,
+      username: '',
+      messages: [],
+      isJoined: false,
+      socket: null,
+    });
   },
-
+  
   setUsername: (username: string) => {
     set({ username });
   }
