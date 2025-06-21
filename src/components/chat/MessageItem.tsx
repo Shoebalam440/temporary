@@ -1,4 +1,4 @@
-import { Message } from "@/store/chatStore"
+import { Message, useChatStore } from "@/store/chatStore"
 import { format, parseISO } from "date-fns"
 import { FileText, Download, Image } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,8 @@ interface MessageItemProps {
 }
 
 export const MessageItem = ({ message }: MessageItemProps) => {
-  const isMyMessage = message.sender === "me"
+  const currentUser = useChatStore((state) => state.username)
+  const isMyMessage = message.username === currentUser
   const formattedTime = format(
     typeof message.timestamp === "string"
       ? parseISO(message.timestamp)
@@ -26,6 +27,7 @@ export const MessageItem = ({ message }: MessageItemProps) => {
   return (
     <div className={`flex flex-col mb-4 ${isMyMessage ? "items-end" : "items-start"}`}>
       <div className={`message-bubble ${isMyMessage ? "my-message" : "other-message"}`}>
+        {!isMyMessage && <div className="font-bold text-xs mb-1">{message.username}</div>}
         {message.text}
         
         {message.file && (
