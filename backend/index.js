@@ -45,7 +45,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: [
-      'https://your-app.netlify.app', // <-- Replace with your actual Netlify URL
+      'https://fiveminor.netlify.app', // <-- Replace with your actual Netlify URL
       'https://temporary-sbhe.onrender.com'
     ],
     methods: ['GET', 'POST'],
