@@ -92,8 +92,7 @@ app.post('/upload', (req, res) => {
   res.status(201).json({ message: 'Message sent successfully', data: message });
 });
 
-// Serve uploaded files
-app.use('/uploads', express.static(uploadDir));
+
 
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
