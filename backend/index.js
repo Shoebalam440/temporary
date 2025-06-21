@@ -10,7 +10,14 @@ const app = express();
 const PORT = 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://fiveminor.netlify.app', // <-- Replace with your actual Netlify URL
+    'https://temporary-sbhe.onrender.com'
+  ],
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Ensure uploads directory exists
@@ -37,8 +44,12 @@ let messagesByRoom = {};
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: [
+      'https://your-app.netlify.app', // <-- Replace with your actual Netlify URL
+      'https://temporary-sbhe.onrender.com'
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 

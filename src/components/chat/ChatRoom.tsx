@@ -25,17 +25,17 @@ export const ChatRoom = () => {
   return (
     <div className="flex flex-col h-screen">
       <header className="flex items-center justify-between bg-card p-4 border-b sticky top-0 z-10">
-        <div className="flex items-center">
-          <MessageSquareText className="h-5 w-5 mr-2 text-primary" />
-          <h1 className="text-xl font-semibold">Quick Chat</h1>
-        </div>
+      <div className="flex items-center">
+        <MessageSquareText className="h-5 w-5 mr-2 text-primary" />
+        <h1 className="text-xl font-semibold">Quick Chat</h1>
+      </div>
         <Button onClick={reset} variant="ghost" size="sm">
-          <LogOut className="h-4 w-4 mr-1" />
-          Leave
-        </Button>
+        <LogOut className="h-4 w-4 mr-1" />
+        Leave
+      </Button>
       </header>
-      
-      <div className="bg-muted/50 p-4 border-b">
+  
+    <div className="bg-muted/50 p-4 border-b">
         <p className="text-sm font-medium">
           You're chatting as <span className="font-semibold">{username}</span>
         </p>
