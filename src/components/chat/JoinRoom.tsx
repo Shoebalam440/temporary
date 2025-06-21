@@ -53,9 +53,12 @@ export const JoinRoom = () => {
                   <FormField control={form.control} name="username" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Your Name</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center"><UserRound className="mr-2 h-4 w-4 text-muted-foreground" /><Input placeholder="Enter your name" {...field} /></div>
-                      </FormControl>
+                      <div className="relative">
+                        <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <FormControl>
+                          <Input className="pl-9" placeholder="Enter your name" {...field} />
+                        </FormControl>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -64,9 +67,12 @@ export const JoinRoom = () => {
                   <FormField control={form.control} name="username" render={({ field }) => (
                      <FormItem className="mb-4">
                       <FormLabel>Your Name</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center"><UserRound className="mr-2 h-4 w-4 text-muted-foreground" /><Input placeholder="Enter your name" {...field} /></div>
-                      </FormControl>
+                       <div className="relative">
+                        <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <FormControl>
+                          <Input className="pl-9" placeholder="Enter your name" {...field} />
+                        </FormControl>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )} />
