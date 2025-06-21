@@ -123,14 +123,14 @@ export const useChatStore = create<ChatState>((set, get) => {
     },
     
     joinRoom: (roomId, username) => {
-      set({ roomId, username, isJoined: true })
-      saveState({ ...get(), roomId, username, isJoined: true })
+      set({ roomId, username, isJoined: true, messages: [] })
+      saveState({ ...get(), roomId, username, isJoined: true, messages: [] })
     },
     
     createRoom: (username) => {
       const roomId = uuidv4().substring(0, 8) // Shorter, more user-friendly ID
-      set({ roomId, username, isJoined: true })
-      saveState({ ...get(), roomId, username, isJoined: true })
+      set({ roomId, username, isJoined: true, messages: [] })
+      saveState({ ...get(), roomId, username, isJoined: true, messages: [] })
       return roomId
     },
     
