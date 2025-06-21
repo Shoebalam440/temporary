@@ -60,8 +60,18 @@ io.on('connection', (socket) => {
 app.post('/upload', upload.single('file'), (req, res) => {
   const { username, text, roomId } = req.body;
 
-  if (!username || !roomId || (!text && !req.file)) {
-    return res.status(400).json({ error: 'Missing required fields: username, roomId, and text or file.' });
+  // Enhanced validation to pinpoint the issue
+  if (!username || !roomId || (typeof text === 'string' && !text.trim() && !req.file)) {
+    return res.status(400).json({ 
+        error: 'Validation failed on server.',
+        details: 'The server requires a username, a roomId, and either a non-empty text message or a file.',
+        received: {
+            username: username || 'MISSING',
+            roomId: roomId || 'MISSING',
+            text: text === undefined ? 'MISSING' : text,
+            file: req.file ? req.file.originalname : 'MISSING'
+        }
+    });
   }
 
   const backendUrl = process.env.RENDER_URL || `http://localhost:${PORT}`;
