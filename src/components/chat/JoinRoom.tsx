@@ -10,139 +10,79 @@ import { Input } from "@/components/ui/input"
 import { MessageSquareText, UserRound } from "lucide-react"
 import { useChatStore } from "@/store/chatStore"
 
-// Form schemas
-const joinSchema = z.object({
+const formSchema = z.object({
   username: z.string().min(2, "Username must be at least 2 characters"),
-  roomId: z.string().min(4, "Room ID must be at least 4 characters"),
+  roomId: z.string(),
 })
-
-const createSchema = z.object({
-  username: z.string().min(2, "Username must be at least 2 characters"),
-})
-
-type JoinFormValues = z.infer<typeof joinSchema>
-type CreateFormValues = z.infer<typeof createSchema>
 
 export const JoinRoom = () => {
-  const [activeTab, setActiveTab] = useState<"join" | "create">("create")
-  const { joinRoom, createRoom, isConnected } = useChatStore((state) => ({
-    joinRoom: state.joinRoom,
-    createRoom: state.createRoom,
-    isConnected: state.isConnected,
-  }))
-  
-  // Form for joining an existing room
-  const joinForm = useForm<JoinFormValues>({
-    resolver: zodResolver(joinSchema),
-    defaultValues: {
-      username: "",
-      roomId: "",
-    },
+  const [activeTab, setActiveTab] = useState("create")
+  const { joinRoom, createRoom, socket } = useChatStore()
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { username: "", roomId: "" },
   })
 
-  // Form for creating a new room
-  const createForm = useForm<CreateFormValues>({
-    resolver: zodResolver(createSchema),
-    defaultValues: {
-      username: "",
-    },
-  })
-
-  const onJoinSubmit = (data: JoinFormValues) => {
-    joinRoom(data.roomId, data.username)
-  }
-
-  const onCreateSubmit = (data: CreateFormValues) => {
-    createRoom(data.username)
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    if (activeTab === 'create') {
+      createRoom(values.username)
+    } else {
+      joinRoom(values.roomId, values.username)
+    }
   }
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl flex justify-center items-center gap-2">
-            <MessageSquareText />
-            Quick Chat
-          </CardTitle>
-          <CardDescription>
-            Connect without sign-in. Create or join a temporary private chat room.
-          </CardDescription>
+          <CardTitle className="text-2xl flex justify-center items-center gap-2"><MessageSquareText />Quick Chat</CardTitle>
+          <CardDescription>Connect without sign-in. Create or join a temporary private chat room.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="create" value={activeTab} onValueChange={(value) => setActiveTab(value as "join" | "create")}>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="create">Create Room</TabsTrigger>
               <TabsTrigger value="join">Join Room</TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="create">
-              <Form {...createForm}>
-                <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-4">
-                  <FormField
-                    control={createForm.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Your Name</FormLabel>
-                        <FormControl>
-                          <div className="flex items-center">
-                            <UserRound className="mr-2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Enter your name" {...field} />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <CardFooter className="px-0 pt-4">
-                    <Button type="submit" className="w-full" disabled={!isConnected}>
-                      {isConnected ? "Create & Join" : "Connecting..."}
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Form>
-            </TabsContent>
-            
-            <TabsContent value="join">
-              <Form {...joinForm}>
-                <form onSubmit={joinForm.handleSubmit(onJoinSubmit)} className="space-y-4">
-                  <FormField
-                    control={joinForm.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Your Name</FormLabel>
-                        <FormControl>
-                          <div className="flex items-center">
-                            <UserRound className="mr-2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Enter your name" {...field} />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={joinForm.control}
-                    name="roomId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Room ID</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter room ID to join" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <CardFooter className="px-0 pt-4">
-                    <Button type="submit" className="w-full" disabled={!isConnected}>
-                      {isConnected ? "Join Room" : "Connecting..."}
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Form>
-            </TabsContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <TabsContent value="create" className="m-0">
+                  <FormField control={form.control} name="username" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Your Name</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center"><UserRound className="mr-2 h-4 w-4 text-muted-foreground" /><Input placeholder="Enter your name" {...field} /></div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </TabsContent>
+                <TabsContent value="join" className="m-0">
+                  <FormField control={form.control} name="username" render={({ field }) => (
+                     <FormItem className="mb-4">
+                      <FormLabel>Your Name</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center"><UserRound className="mr-2 h-4 w-4 text-muted-foreground" /><Input placeholder="Enter your name" {...field} /></div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="roomId" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Room ID</FormLabel>
+                      <FormControl><Input placeholder="Enter room ID to join" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </TabsContent>
+                <CardFooter className="px-0 pt-4">
+                  <Button type="submit" className="w-full" disabled={!socket}>
+                    {socket ? (activeTab === 'create' ? 'Create & Join' : 'Join Room') : 'Connecting...'}
+                  </Button>
+                </CardFooter>
+              </form>
+            </Form>
           </Tabs>
         </CardContent>
       </Card>

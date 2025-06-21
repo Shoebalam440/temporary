@@ -1,87 +1,36 @@
-import { useState, useRef, ChangeEvent, FormEvent } from "react"
-import { Paperclip, Send } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { readFileAsDataURL, formatFileSize } from "@/lib/fileUtils"
-import { useChatStore } from "@/store/chatStore"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useRef } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useChatStore } from '@/store/chatStore'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form"
+import { Paperclip, Send, X } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+
+const formSchema = z.object({
+  text: z.string(),
+})
 
 export const ChatInput = () => {
-  const [message, setMessage] = useState("")
+  const { socket, roomId, username, addMessage } = useChatStore()
+  const { toast } = useToast()
   const [file, setFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const addMessage = useChatStore((state) => state.addMessage)
-  const { toast } = useToast()
-  const { username, roomId } = useChatStore((state) => ({
-    username: state.username,
-    roomId: state.roomId,
-  }))
-  const backendUrl = "https://temporary-sbhe.onrender.com"
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    
-    if (!message.trim() && !file) return
-    
-    try {
-      let fileData = null
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { text: "" },
+  })
 
-      // 1. Upload file if present
-      if (file) {
-        const formData = new FormData()
-        formData.append("file", file)
-
-        const uploadRes = await fetch(`${backendUrl}/upload`, {
-          method: "POST",
-          body: formData,
-        })
-
-        if (!uploadRes.ok) throw new Error("File upload failed")
-        const uploadJson = await uploadRes.json()
-
-        fileData = {
-          name: file.name,
-          url: `${backendUrl}/uploads/${uploadJson.file}`,
-          type: file.type,
-          size: file.size,
-        }
-      }
-
-      // 2. Send message to backend
-      const msgRes = await fetch(`${backendUrl}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: username || "me",
-          text: message.trim(),
-          file: fileData,
-          roomId: roomId,
-        }),
-      })
-
-      if (!msgRes.ok) throw new Error("Message send failed")
-      const msgJson = await msgRes.json()
-
-      // Reset form
-      setMessage("")
-      setFile(null)
-    } catch (error) {
-      console.error("Error sending message:", error)
-      toast({
-        title: "Error sending message",
-        description: "Failed to send your message. Please try again.",
-        variant: "destructive"
-      })
-    }
-  }
-  
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
-      if (selectedFile.size > 5 * 1024 * 1024) {
+      if (selectedFile.size > 10 * 1024 * 1024) {
         toast({
           title: "File too large",
-          description: "Maximum file size is 5MB",
+          description: "Please select a file smaller than 10MB.",
           variant: "destructive"
         })
         return
@@ -90,70 +39,74 @@ export const ChatInput = () => {
     }
   }
   
-  const triggerFileInput = () => {
-    fileInputRef.current?.click()
-  }
-  
   const removeFile = () => {
-    setFile(null)
+    setFile(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""
+        fileInputRef.current.value = "";
     }
   }
-  
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!socket || (!values.text.trim() && !file)) {
+      return
+    }
+
+    // Create a simple message for testing
+    const message = {
+      id: Date.now().toString(),
+      text: values.text,
+      username: username,
+      timestamp: new Date().toISOString(),
+      file: file ? {
+        name: file.name,
+        url: URL.createObjectURL(file),
+        type: file.type,
+        size: file.size
+      } : undefined
+    }
+
+    addMessage(message)
+    form.reset()
+    removeFile()
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+    <div className="relative">
       {file && (
-        <div className="bg-muted p-2 rounded-md flex items-center gap-2">
-          <span className="text-sm truncate flex-1">{file.name}</span>
-          <span className="text-xs text-muted-foreground">
-            {formatFileSize(file.size)}
-          </span>
-          <Button 
-            type="button" 
-            variant="ghost" 
-            size="sm" 
-            onClick={removeFile}
-            className="h-6 px-2"
-          >
-            Remove
-          </Button>
+        <div className="absolute bottom-full left-0 right-0 p-2 bg-muted rounded-t-md">
+            <div className="flex items-center justify-between bg-background p-2 rounded-md">
+                <div className="flex items-center gap-2 overflow-hidden">
+                    <Paperclip size={16} className="text-muted-foreground flex-shrink-0" />
+                    <p className="text-sm text-muted-foreground truncate">{file.name}</p>
+                </div>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={removeFile}>
+                    <X size={16} />
+                </Button>
+            </div>
         </div>
       )}
-      
-      <div className="flex gap-2">
-        <Button 
-          type="button" 
-          variant="outline" 
-          size="icon" 
-          className="shrink-0" 
-          onClick={triggerFileInput}
-        >
-          <Paperclip size={18} />
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            onChange={handleFileChange}
-            accept="image/*,application/pdf,text/*,audio/*,video/*"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
+          <FormField
+            control={form.control}
+            name="text"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormControl>
+                  <Input placeholder="Type a message..." {...field} autoComplete="off" />
+                </FormControl>
+              </FormItem>
+            )}
           />
-        </Button>
-        
-        <Input 
-          className="chat-input"
-          placeholder="Type a message..." 
-          value={message} 
-          onChange={(e) => setMessage(e.target.value)} 
-        />
-        
-        <Button 
-          type="submit" 
-          className="rounded-full h-12 w-12 shrink-0" 
-          disabled={!message.trim() && !file}
-        >
-          <Send size={18} />
-        </Button>
-      </div>
-    </form>
+          <Button type="button" variant="outline" size="icon" onClick={() => fileInputRef.current?.click()}>
+            <Paperclip size={18} />
+          </Button>
+          <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+          <Button type="submit" disabled={!socket}>
+            <Send size={18} />
+          </Button>
+        </form>
+      </Form>
+    </div>
   )
 }

@@ -1,69 +1,53 @@
 import { Message, useChatStore } from "@/store/chatStore"
-import { format, parseISO } from "date-fns"
-import { FileText, Download, Image } from "lucide-react"
+import { format } from "date-fns"
+import { FileText, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { downloadFile, isImageFile } from "@/lib/fileUtils"
 
-interface MessageItemProps {
-  message: Message
-}
-
-export const MessageItem = ({ message }: MessageItemProps) => {
-  const currentUser = useChatStore((state) => state.username)
-  const isMyMessage = message.username === currentUser
-  const formattedTime = format(
-    typeof message.timestamp === "string"
-      ? parseISO(message.timestamp)
-      : message.timestamp,
-    "HH:mm"
-  )
+export const MessageItem = ({ message }: { message: Message }) => {
+  const username = useChatStore((state) => state.username)
+  const isMyMessage = message.username === username
   
   const handleDownload = () => {
     if (message.file) {
-      downloadFile(message.file.url, message.file.name)
+      window.open(message.file.url, '_blank')
     }
   }
-  
+
+  const formatTime = (timestamp: Date | string) => {
+    try {
+      const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp
+      return format(date, "HH:mm")
+    } catch {
+      return "00:00"
+    }
+  }
+
   return (
     <div className={`flex flex-col mb-4 ${isMyMessage ? "items-end" : "items-start"}`}>
-      <div className={`message-bubble ${isMyMessage ? "my-message" : "other-message"}`}>
-        {!isMyMessage && <div className="font-bold text-xs mb-1">{message.username}</div>}
-        {message.text}
-        
-        {message.file && (
-          <div className="file-attachment">
-            {message.file.type.startsWith("image/") ? (
-              <div className="flex flex-col">
-                <div className="mb-2 flex items-center">
-                  <Image size={16} className="mr-1" />
-                  <span className="text-sm">{message.file.name}</span>
+      <div className={`flex items-end gap-2 ${isMyMessage ? "flex-row-reverse" : ""}`}>
+        <div className={`max-w-xs p-3 rounded-lg ${isMyMessage ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+          {!isMyMessage && <div className="font-bold text-xs mb-1 text-primary">{message.username}</div>}
+          <p className="text-sm">{message.text}</p>
+          
+          {message.file && (
+            <div className="mt-2">
+              {message.file.type.startsWith("image/") ? (
+                <img src={message.file.url} alt={message.file.name} className="max-w-full max-h-60 rounded-md object-contain cursor-pointer" onClick={handleDownload} />
+              ) : (
+                <div className="flex items-center justify-between bg-background/50 p-2 rounded-md">
+                  <div className="flex items-center gap-2">
+                    <FileText size={24} />
+                    <span className="text-sm truncate">{message.file.name}</span>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleDownload}><Download size={16} /></Button>
                 </div>
-                <img 
-                  src={message.file.url} 
-                  alt={message.file.name} 
-                  className="max-w-full max-h-60 rounded-md object-contain"
-                />
-              </div>
-            ) : (
-              <>
-                <FileText size={16} />
-                <span>{message.file.name}</span>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="ml-auto h-6 w-6"
-                  onClick={handleDownload}
-                >
-                  <Download size={14} />
-                </Button>
-              </>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </div>
-      
-      <div className="message-time">
-        {formattedTime}
+      <div className={`text-xs text-muted-foreground mt-1 px-2 ${isMyMessage ? "text-right" : "text-left"}`}>
+        {formatTime(message.timestamp)}
       </div>
     </div>
   )

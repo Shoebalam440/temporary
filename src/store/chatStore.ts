@@ -1,6 +1,4 @@
 import { create } from 'zustand'
-import { io, Socket } from "socket.io-client"
-import { v4 as uuidv4 } from 'uuid'
 
 export interface Message {
   id: string
@@ -20,8 +18,7 @@ interface ChatState {
   username: string
   messages: Message[]
   isJoined: boolean
-  isConnected: boolean
-  socket: Socket | null
+  socket: any | null
   
   initSocket: () => void
   closeSocket: () => void
@@ -32,14 +29,11 @@ interface ChatState {
   setUsername: (username: string) => void
 }
 
-const backendUrl = "https://temporary-sbhe.onrender.com";
-
 const initialState = {
   roomId: null,
   username: '',
   messages: [],
   isJoined: false,
-  isConnected: false,
   socket: null,
 };
 
@@ -47,50 +41,41 @@ export const useChatStore = create<ChatState>((set, get) => ({
   ...initialState,
 
   initSocket: () => {
-    if (get().socket) return;
-    const socket = io(backendUrl);
-    
-    socket.on("connect", () => {
-      set({ socket, isConnected: true });
-    });
-    
-    socket.on("disconnect", () => {
-      set({ socket: null, isConnected: false });
-    });
-
-    socket.on("newMessage", (message) => get().addMessage(message));
-    socket.on("allMessages", (messages) => set({ messages: messages.map(m => ({...m, timestamp: new Date(m.timestamp)})) }));
+    console.log('initSocket called')
+    set({ socket: {} })
   },
 
   closeSocket: () => {
-    get().socket?.disconnect();
-    set({ socket: null, isConnected: false });
+    console.log('closeSocket called')
+    set({ socket: null })
   },
 
   joinRoom: (roomId, username) => {
-    get().socket?.emit('joinRoom', roomId);
-    set({ roomId, username, isJoined: true, messages: [] });
+    console.log('joinRoom called', roomId, username)
+    set({ roomId, username, isJoined: true, messages: [] })
   },
   
   createRoom: (username) => {
-    const roomId = uuidv4().substring(0, 8);
-    get().socket?.emit('joinRoom', roomId);
-    set({ roomId, username, isJoined: true, messages: [] });
-    return roomId;
+    console.log('createRoom called', username)
+    const roomId = 'test-room-' + Date.now()
+    set({ roomId, username, isJoined: true, messages: [] })
+    return roomId
   },
   
   addMessage: (message) => {
+    console.log('addMessage called', message)
     set((state) => ({
-      messages: [...state.messages, { ...message, timestamp: new Date(message.timestamp) }]
-    }));
+      messages: [...state.messages, message]
+    }))
   },
   
   reset: () => {
-    get().closeSocket();
-    set(initialState);
+    console.log('reset called')
+    set(initialState)
   },
   
   setUsername: (username: string) => {
-    set({ username });
+    console.log('setUsername called', username)
+    set({ username })
   }
 }))

@@ -4,18 +4,14 @@ import { ChatRoom } from "@/components/chat/ChatRoom"
 import { useChatStore } from "@/store/chatStore"
 
 function ChatPage() {
-  const { isJoined, initSocket, closeSocket } = useChatStore((state) => ({
-    isJoined: state.isJoined,
-    initSocket: state.initSocket,
-    closeSocket: state.closeSocket,
-  }))
+  const { isJoined, initSocket, closeSocket } = useChatStore()
 
   useEffect(() => {
     initSocket()
     return () => {
       closeSocket()
     }
-  }, [initSocket, closeSocket])
+  }, []) // Empty dependency array to prevent infinite loops
 
   return (
     <div className="min-h-screen bg-background">
