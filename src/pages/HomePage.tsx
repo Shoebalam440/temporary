@@ -2,9 +2,16 @@ import { MessageSquareText, Lock, Clock, FileImage } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useChatStore } from '@/store/chatStore'
 
 function HomePage() {
   const navigate = useNavigate()
+  const reset = useChatStore((state) => state.reset)
+
+  const handleStartChat = () => {
+    reset()
+    navigate('/chat')
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -19,7 +26,7 @@ function HomePage() {
             Connect instantly, share files, and chat securely without sharing personal information.
             Perfect for quick conversations when privacy matters.
           </p>
-          <Button size="lg" className="text-lg px-8 py-6" onClick={() => navigate('/chat')}>
+          <Button size="lg" className="text-lg px-8 py-6" onClick={handleStartChat}>
             Start Chatting
           </Button>
         </div>
@@ -71,7 +78,7 @@ function HomePage() {
         </div>
         
         <div className="mt-16 text-center">
-          <Button size="lg" onClick={() => navigate('/chat')}>
+          <Button size="lg" onClick={handleStartChat}>
             Start a New Chat
           </Button>
         </div>
