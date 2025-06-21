@@ -16,6 +16,7 @@ export const ChatRoom = () => {
   const addMessage = useChatStore((state) => state.addMessage)
   const { toast } = useToast()
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const socketInitialized = useRef(false)
   
   useEffect(() => {
     // Fetch all messages on mount
@@ -25,19 +26,24 @@ export const ChatRoom = () => {
   }, [setMessages])
 
   useEffect(() => {
+    if (socketInitialized.current) return;
+    socketInitialized.current = true;
+
     // Listen for new messages
     socket.on("new_message", (msg) => {
       addMessage({
+        username: msg.username,
         text: msg.text,
-        sender: msg.username === username ? "me" : "other",
         file: msg.file,
       })
     })
+
     return () => {
       socket.off("new_message")
+      socketInitialized.current = false;
     }
   }, [addMessage, username])
-
+  
   useEffect(() => {
     scrollToBottom()
   }, [messages])

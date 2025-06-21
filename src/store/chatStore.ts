@@ -1,11 +1,12 @@
 import { create } from 'zustand'
+import { io, Socket } from "socket.io-client"
 import { v4 as uuidv4 } from 'uuid'
 
 export interface Message {
   id: string
   text: string
-  sender: 'me' | 'other'
-  timestamp: Date
+  username: string
+  timestamp: Date | string
   file?: {
     name: string
     url: string
@@ -20,6 +21,7 @@ interface ChatState {
   username: string
   isJoined: boolean
   otherUserName: string | null
+  socket: Socket | null
   
   // Actions
   setRoomId: (roomId: string) => void
@@ -30,7 +32,12 @@ interface ChatState {
   setOtherUserName: (name: string) => void
   setMessages: (messages: Message[]) => void
   reset: () => void
+  initSocket: () => void
+  closeSocket: () => void
 }
+
+const backendUrl = "https://temporary-sbhe.onrender.com";
+let socket: Socket | null = null;
 
 // Helper function to load state from local storage
 const loadState = () => {
@@ -60,7 +67,8 @@ const saveState = (state: Partial<ChatState>) => {
       messages: state.messages,
       username: state.username,
       isJoined: state.isJoined,
-      otherUserName: state.otherUserName
+      otherUserName: state.otherUserName,
+      socket: state.socket
     }
     localStorage.setItem('chatState', JSON.stringify(stateToSave))
   } catch (error) {
@@ -74,7 +82,8 @@ const initialState = {
   messages: [],
   username: '',
   isJoined: false,
-  otherUserName: null
+  otherUserName: null,
+  socket: null,
 }
 
 export const useChatStore = create<ChatState>((set, get) => {
@@ -100,10 +109,14 @@ export const useChatStore = create<ChatState>((set, get) => {
       const newMessage = {
         ...message,
         id: uuidv4(),
-        timestamp: new Date()
+        timestamp: new Date().toISOString()
       }
       set((state) => {
-        const updatedMessages = [...state.messages, newMessage]
+        // Prevent adding duplicate messages
+        if (state.messages.some(m => m.id === newMessage.id)) {
+          return state
+        }
+        const updatedMessages = [...state.messages, { ...newMessage, timestamp: new Date(newMessage.timestamp) }]
         saveState({ ...state, messages: updatedMessages })
         return { messages: updatedMessages }
       })
@@ -134,6 +147,33 @@ export const useChatStore = create<ChatState>((set, get) => {
     reset: () => {
       set(initialState)
       localStorage.removeItem('chatState')
+    },
+
+    initSocket: () => {
+      // Prevent creating a new socket if one already exists
+      if (get().socket) return;
+
+      const newSocket = io(backendUrl);
+
+      newSocket.on("connect", () => {
+        console.log("Socket connected:", newSocket.id);
+      });
+
+      newSocket.on("newMessage", (message) => {
+        // We need a way to add messages from the server
+        // This assumes the incoming message has the full Message shape
+        set((state) => ({ messages: [...state.messages, { ...message, timestamp: new Date(message.timestamp) }] }));
+      });
+      
+      set({ socket: newSocket });
+    },
+
+    closeSocket: () => {
+      const { socket } = get();
+      if (socket) {
+        socket.disconnect();
+        set({ socket: null });
+      }
     }
   }
 })
