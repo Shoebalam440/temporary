@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { MessageSquareText, UserRound } from "lucide-react"
+import { MessageSquareText, UserRound, Wifi, WifiOff } from "lucide-react"
 import { useChatStore } from "@/store/chatStore"
 
 const formSchema = z.object({
@@ -31,6 +31,8 @@ export const JoinRoom = () => {
       joinRoom(values.roomId, values.username)
     }
   }
+
+  const isConnected = socket && socket.connected
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
@@ -77,8 +79,11 @@ export const JoinRoom = () => {
                   )} />
                 </TabsContent>
                 <CardFooter className="px-0 pt-4">
-                  <Button type="submit" className="w-full" disabled={!socket}>
-                    {socket ? (activeTab === 'create' ? 'Create & Join' : 'Join Room') : 'Connecting...'}
+                  <Button type="submit" className="w-full" disabled={!isConnected}>
+                    <div className="flex items-center gap-2">
+                      {isConnected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
+                      {isConnected ? (activeTab === 'create' ? 'Create & Join' : 'Join Room') : 'Connecting...'}
+                    </div>
                   </Button>
                 </CardFooter>
               </form>

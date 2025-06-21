@@ -13,8 +13,10 @@ const formSchema = z.object({
   text: z.string(),
 })
 
+const backendUrl = "https://temporary-sbhe.onrender.com";
+
 export const ChatInput = () => {
-  const { socket, roomId, username, addMessage } = useChatStore()
+  const { socket, roomId, username } = useChatStore()
   const { toast } = useToast()
   const [file, setFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -51,23 +53,35 @@ export const ChatInput = () => {
       return
     }
 
-    // Create a simple message for testing
-    const message = {
-      id: Date.now().toString(),
-      text: values.text,
-      username: username,
-      timestamp: new Date().toISOString(),
-      file: file ? {
-        name: file.name,
-        url: URL.createObjectURL(file),
-        type: file.type,
-        size: file.size
-      } : undefined
+    const formData = new FormData()
+    formData.append('username', username)
+    formData.append('text', values.text)
+    formData.append('roomId', roomId!)
+    if (file) {
+      formData.append('file', file)
     }
 
-    addMessage(message)
-    form.reset()
-    removeFile()
+    try {
+      const res = await fetch(`${backendUrl}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to send message');
+      }
+      
+      form.reset()
+      removeFile()
+
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive"
+      })
+    }
   }
 
   return (
