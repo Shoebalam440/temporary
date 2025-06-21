@@ -7,7 +7,12 @@ import { MessageSquareText, Copy, LogOut } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export const ChatRoom = () => {
-  const { roomId, messages, username, otherUserName, reset } = useChatStore()
+  const { roomId, messages, username, reset } = useChatStore((state) => ({
+    roomId: state.roomId,
+    messages: state.messages,
+    username: state.username,
+    reset: state.reset,
+  }))
   const { toast } = useToast()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
@@ -52,7 +57,6 @@ export const ChatRoom = () => {
       <div className="flex flex-col gap-1">
         <p className="text-sm font-medium">
           You're chatting as <span className="font-semibold">{username}</span>
-          {otherUserName && <> with <span className="font-semibold">{otherUserName}</span></>}
         </p>
         {roomId && (
           <div className="flex items-center mt-1">
