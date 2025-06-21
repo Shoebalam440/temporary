@@ -38,7 +38,7 @@ export const ChatInput = () => {
 
         fileData = {
           name: file.name,
-          url: `http://localhost:5000/uploads/${uploadJson.file}`,
+          url: `${backendUrl}/uploads/${uploadJson.file}`,
           type: file.type,
           size: file.size,
         }
