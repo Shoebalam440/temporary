@@ -144,6 +144,7 @@ export const useChatStore = create<ChatState>((set, get) => {
     },
     
     reset: () => {
+      get().closeSocket(); // Explicitly close any existing connection
       set(initialState)
       localStorage.removeItem('chatState')
     },
@@ -179,7 +180,7 @@ export const useChatStore = create<ChatState>((set, get) => {
       const { socket } = get();
       if (socket) {
         socket.disconnect();
-        set({ isConnected: false });
+        set({ socket: null, isConnected: false }); // Also nullify the socket
       }
     }
   }
