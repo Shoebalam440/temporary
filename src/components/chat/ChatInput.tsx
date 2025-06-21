@@ -34,19 +34,16 @@ export const ChatInput = () => {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const res = await fetch('https://file.io', {
+      const res = await fetch(`https://transfer.sh/${encodeURIComponent(file.name)}`, {
         method: 'POST',
-        body: formData,
+        body: file,
       });
-      const data = await res.json();
-      if (data.success) {
-        form.setValue('fileUrl', data.link);
-        toast({ title: "File uploaded!", description: "Link ready to send." });
-      } else {
-        toast({ title: "Upload failed", description: data.message, variant: "destructive" });
-      }
+      if (!res.ok) throw new Error('Upload failed');
+      const link = await res.text();
+      form.setValue('fileUrl', link.trim());
+      toast({ title: "File uploaded!", description: "Link ready to send." });
     } catch (err) {
-      toast({ title: "Upload failed", description: "Network error.", variant: "destructive" });
+      toast({ title: "Upload failed", description: "Network error or CORS issue.", variant: "destructive" });
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -94,17 +91,6 @@ export const ChatInput = () => {
               <FormItem className="flex-1">
                 <FormControl>
                   <Input placeholder="Type a message..." {...field} autoComplete="off" />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="fileUrl"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormControl>
-                  <Input placeholder="Paste file link (optional)" {...field} autoComplete="off" />
                 </FormControl>
               </FormItem>
             )}
