@@ -56,7 +56,7 @@ export const JoinRoom = () => {
                       <div className="relative">
                         <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <FormControl>
-                          <Input className="pl-9" placeholder="Enter your name" {...field} />
+                          <Input className="pl-9" placeholder="Enter your name" {...field} autoComplete="name" />
                         </FormControl>
                       </div>
                       <FormMessage />
@@ -70,7 +70,7 @@ export const JoinRoom = () => {
                        <div className="relative">
                         <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <FormControl>
-                          <Input className="pl-9" placeholder="Enter your name" {...field} />
+                          <Input className="pl-9" placeholder="Enter your name" {...field} autoComplete="name" />
                         </FormControl>
                       </div>
                       <FormMessage />
@@ -79,7 +79,7 @@ export const JoinRoom = () => {
                   <FormField control={form.control} name="roomId" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Room ID</FormLabel>
-                      <FormControl><Input placeholder="Enter room ID to join" {...field} /></FormControl>
+                      <FormControl><Input placeholder="Enter room ID to join" {...field} autoComplete="off" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
