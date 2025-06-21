@@ -48,7 +48,6 @@ io.on('connection', (socket) => {
   socket.on('joinRoom', (roomId) => {
     socket.join(roomId);
     console.log(`User ${socket.id} joined room ${roomId}`);
-    // Optionally send history
     socket.emit('allMessages', messagesByRoom[roomId] || []);
   });
 
@@ -57,39 +56,43 @@ io.on('connection', (socket) => {
   });
 });
 
-// POST /messages - receive a message
-app.post('/messages', (req, res) => {
-  const { username, text, file, roomId } = req.body;
-  if (!username || (!text && !file) || !roomId) {
-    return res.status(400).json({ error: 'username, roomId and either text or file are required' });
+// POST /upload - This is the single endpoint for sending messages
+app.post('/upload', upload.single('file'), (req, res) => {
+  const { username, text, roomId } = req.body;
+
+  if (!username || !roomId || (!text && !req.file)) {
+    return res.status(400).json({ error: 'Missing required fields: username, roomId, and text or file.' });
   }
-  
-  const message = { id: Date.now(), username, text, file, timestamp: new Date() };
+
+  const backendUrl = process.env.RENDER_URL || `http://localhost:${PORT}`;
+
+  let fileData = null;
+  if (req.file) {
+    fileData = {
+      name: req.file.originalname,
+      url: `${backendUrl}/uploads/${req.file.filename}`,
+      type: req.file.mimetype,
+      size: req.file.size,
+    };
+  }
+
+  const message = {
+    id: Date.now().toString(),
+    username,
+    text: text || '',
+    file: fileData,
+    roomId,
+    timestamp: new Date().toISOString(),
+  };
 
   if (!messagesByRoom[roomId]) {
     messagesByRoom[roomId] = [];
   }
   messagesByRoom[roomId].push(message);
 
-  io.to(roomId).emit('newMessage', message); // Emit only to the specific room
-  res.status(201).json({ message: 'Message received', data: message });
-});
-
-// GET /messages - get all messages for a specific room
-app.get('/messages', (req, res) => {
-  const { roomId } = req.query;
-  if (!roomId) {
-    return res.status(400).json({ error: 'roomId is required' });
-  }
-  res.json(messagesByRoom[roomId] || []);
-});
-
-// POST /upload - receive a file
-app.post('/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
-  }
-  res.status(201).json({ message: 'File uploaded', file: req.file.filename });
+  io.to(roomId).emit('newMessage', message);
+  
+  res.status(201).json({ message: 'Message sent successfully', data: message });
 });
 
 // Serve uploaded files
