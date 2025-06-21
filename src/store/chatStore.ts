@@ -34,13 +34,17 @@ interface ChatState {
 
 const backendUrl = "https://temporary-sbhe.onrender.com";
 
-export const useChatStore = create<ChatState>((set, get) => ({
+const initialState = {
   roomId: null,
   username: '',
   messages: [],
   isJoined: false,
   isConnected: false,
   socket: null,
+};
+
+export const useChatStore = create<ChatState>((set, get) => ({
+  ...initialState,
 
   initSocket: () => {
     if (get().socket) return;
@@ -83,14 +87,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   
   reset: () => {
     get().closeSocket();
-    set({
-      roomId: null,
-      username: '',
-      messages: [],
-      isJoined: false,
-      isConnected: false,
-      socket: null,
-    });
+    set(initialState);
   },
   
   setUsername: (username: string) => {
