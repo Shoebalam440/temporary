@@ -12,7 +12,8 @@ const PORT = 5000;
 app.use(cors({
   origin: [
     'https://fiveminor.netlify.app',
-    'https://temporary-sbhe.onrender.com'
+    'https://temporary-sbhe.onrender.com',
+    'http://localhost:5173' // <-- Added for local development
   ],
   methods: ['GET', 'POST'],
   credentials: true
@@ -28,7 +29,8 @@ const io = new Server(server, {
   cors: {
     origin: [
       'https://fiveminor.netlify.app',
-      'https://temporary-sbhe.onrender.com'
+      'https://temporary-sbhe.onrender.com',
+      'http://localhost:5173' // <-- Added for local development
     ],
     methods: ['GET', 'POST'],
     credentials: true
@@ -92,8 +94,6 @@ app.post('/upload', (req, res) => {
   res.status(201).json({ message: 'Message sent successfully', data: message });
 });
 
-
-
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-}); 
+});
