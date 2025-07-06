@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { io, Socket } from "socket.io-client"
+import { Socket } from "socket.io-client"
+import { createSocket } from '../lib/socket'
 
 export interface Message {
   id: string
@@ -30,8 +31,6 @@ interface ChatState {
   setUsername: (username: string) => void
 }
 
-const backendUrl = "https://temporary-sbhe.onrender.com";
-
 const initialState = {
   roomId: null,
   username: '',
@@ -41,11 +40,11 @@ const initialState = {
 };
 
 export const useChatStore = create<ChatState>((set, get) => ({
-  ...initialState,
+    ...initialState,
 
   initSocket: () => {
     if (get().socket) return;
-    const socket = io(backendUrl);
+    const socket = createSocket();
     set({ socket });
 
     socket.on("newMessage", (message) => {
@@ -62,32 +61,34 @@ export const useChatStore = create<ChatState>((set, get) => ({
   closeSocket: () => {
     get().socket?.disconnect();
     set({ socket: null });
-  },
-
-  joinRoom: (roomId, username) => {
+    },
+    
+    joinRoom: (roomId, username) => {
+    console.log("joinRoom called", roomId, username);
     get().socket?.emit('joinRoom', roomId);
     set({ roomId, username, isJoined: true, messages: [] })
-  },
-  
-  createRoom: (username) => {
+    },
+    
+    createRoom: (username) => {
     const roomId = Math.random().toString(36).slice(2, 8).toUpperCase();
+    console.log("createRoom called", roomId, username);
     get().socket?.emit('joinRoom', roomId);
     set({ roomId, username, isJoined: true, messages: [] })
     return roomId;
-  },
-  
+    },
+    
   addMessage: (message) => {
     set((state) => ({
       messages: [...state.messages, { ...message, timestamp: new Date(message.timestamp) }]
     }))
-  },
-  
-  reset: () => {
+    },
+    
+    reset: () => {
     get().closeSocket();
     set(initialState);
   },
   
   setUsername: (username: string) => {
     set({ username })
-  }
+    }
 }))

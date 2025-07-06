@@ -13,7 +13,10 @@ app.use(cors({
   origin: [
     'https://fiveminor.netlify.app',
     'https://temporary-sbhe.onrender.com',
-    'http://localhost:5173' // <-- Added for local development
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:5176'
   ],
   methods: ['GET', 'POST'],
   credentials: true
@@ -30,7 +33,10 @@ const io = new Server(server, {
     origin: [
       'https://fiveminor.netlify.app',
       'https://temporary-sbhe.onrender.com',
-      'http://localhost:5173' // <-- Added for local development
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5175',
+      'http://localhost:5176'
     ],
     methods: ['GET', 'POST'],
     credentials: true

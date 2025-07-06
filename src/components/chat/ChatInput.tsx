@@ -8,13 +8,12 @@ import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form"
 import { Paperclip, Send, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { postChatMessage } from '@/lib/api'
 
 const formSchema = z.object({
   text: z.string(),
   fileUrl: z.string().url().optional().or(z.literal('')),
 })
-
-const backendUrl = "https://temporary-sbhe.onrender.com";
 
 export const ChatInput = () => {
   const { socket, roomId, username } = useChatStore()
@@ -61,14 +60,7 @@ export const ChatInput = () => {
       fileUrl: values.fileUrl || undefined,
     }
     try {
-      const res = await fetch("https://temporary-sbhe.onrender.com/upload", {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        throw new Error('Failed to send message');
-      }
+      await postChatMessage(payload);
       form.reset()
     } catch (error) {
       console.error(error)
