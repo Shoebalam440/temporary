@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { MessageSquareText, UserRound, Wifi, WifiOff } from "lucide-react"
 import { useChatStore } from "@/store/chatStore"
+import { useEffect } from "react"
 
 const formSchema = z.object({
   username: z.string().min(2, "Username must be at least 2 characters"),
@@ -18,13 +19,38 @@ const formSchema = z.object({
 export const JoinRoom = () => {
   const [activeTab, setActiveTab] = useState("create")
   const { joinRoom, createRoom, socket } = useChatStore()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { username: "", roomId: "" },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function waitForConnection(timeout = 5000) {
+    return new Promise<boolean>((resolve) => {
+      if (socket && socket.connected) return resolve(true)
+      const start = Date.now()
+      const check = () => {
+        if (socket && socket.connected) return resolve(true)
+        if (Date.now() - start > timeout) return resolve(false)
+        setTimeout(check, 100)
+      }
+      check()
+    })
+  }
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setError(null)
+    if (!socket || !socket.connected) {
+      setLoading(true)
+      const connected = await waitForConnection(5000)
+      setLoading(false)
+      if (!connected) {
+        setError("Unable to connect to server. Please try again later.")
+        return
+      }
+    }
     if (activeTab === 'create') {
       createRoom(values.username)
     } else {
@@ -84,13 +110,23 @@ export const JoinRoom = () => {
                     </FormItem>
                   )} />
                 </TabsContent>
-                <CardFooter className="px-0 pt-4">
-                  <Button type="submit" className="w-full" disabled={!isConnected}>
+                <CardFooter className="px-0 pt-4 flex flex-col gap-2">
+                  <Button type="submit" className="w-full" disabled={loading}>
                     <div className="flex items-center gap-2">
-                      {isConnected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-                      {isConnected ? (activeTab === 'create' ? 'Create & Join' : 'Join Room') : 'Connecting...'}
+                      {loading ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+                          Connecting...
+                        </>
+                      ) : (
+                        <>
+                          {isConnected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
+                          {activeTab === 'create' ? 'Create & Join' : 'Join Room'}
+                        </>
+                      )}
                     </div>
                   </Button>
+                  {error && <div className="text-red-500 text-sm text-center">{error}</div>}
                 </CardFooter>
               </form>
             </Form>
